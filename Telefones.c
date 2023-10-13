@@ -6,7 +6,8 @@
 typedef struct dados{
     char NOME[50];
     char TELEFONE[13];
-    long int deslocamento;
+    unsigned int deslocamento;
+    unsigned int linha;
 };
 
 
@@ -15,7 +16,8 @@ typedef struct dados{
 void limparScanf();
 struct dados cadastrarTelefone();
 struct dados consultarTelefone();
-void alterarTelefone(long int deslocamento);
+void alterarTelefone(unsigned int deslocamento);
+void excluirTelefone(char NOME[], char TELEFONE[]);
 
 int main()
 {
@@ -38,6 +40,7 @@ int main()
 
         switch(o){
             case 1:
+                printf("\nCadastrando dados\n\n");
                 dados = cadastrarTelefone();
                 printf("\nDados cadastrados!\n%s %s\n\n\n",dados.NOME,dados.TELEFONE);
                 break;
@@ -47,10 +50,14 @@ int main()
                 if(dados.deslocamento!=0) printf("\nTelefone encontrado com sucesso, %s %s.\n\n\n",dados.NOME,dados.TELEFONE);
                 break;
             case 3:
+                printf("\n\nAlterando dados\n");
                 dados = consultarTelefone();
-                if (dados.deslocamento!=0)alterarTelefone(dados.deslocamento);
+                if (dados.deslocamento!=0) alterarTelefone(dados.deslocamento);
                 break;
             case 4:
+                printf("\n\nExcluindo dados\n");
+                dados = consultarTelefone();
+                if (dados.deslocamento!=0) excluirTelefone(dados.NOME,dados.TELEFONE);
                 break;
             case 5:
                 break;
@@ -74,7 +81,6 @@ struct dados cadastrarTelefone(){
     FILE *telefonesTXT = fopen("Telefones.txt", "a");
     struct dados dados;
     char vazio=0;
-    printf("\nCadastrando dados\n\n");
     do{
         if(vazio==1) printf("“\nNome ou telefone em branco, digite novamente\n"); //depois de rodar novamente o loop, sinaliza o que o nome ou o telefone estavam vazios
         printf("Nome: ");
@@ -91,7 +97,7 @@ struct dados cadastrarTelefone(){
 struct dados consultarTelefone(){
     FILE *telefonesTXT = fopen("Telefones.txt", "r");
     struct dados dados;
-    dados.deslocamento = 0;
+    dados.deslocamento = 0, dados.linha = 0;
     char ENTRADA[50], ch = 0;
     int tamanho;
     printf("\nNome: ");
@@ -104,6 +110,7 @@ struct dados consultarTelefone(){
             tamanho = 0;
             ch = getc(telefonesTXT); //vai para o proximo ch, para tirar o nw de ch.
             dados.deslocamento+=2;//adiciona 1 para o char newline e um para o cr
+            dados.linha++;
         }
         dados.NOME[tamanho] = ch;
         dados.NOME[tamanho+1] = 0;
@@ -112,6 +119,7 @@ struct dados consultarTelefone(){
         if(ch==EOF){
             printf("\nTelefone de %s nao cadastrado\n\n\n",ENTRADA);
             dados.deslocamento = 0;
+            fclose(telefonesTXT);
             return dados;
         };
         tamanho = (tamanho==49) ? 0: tamanho;
@@ -126,17 +134,34 @@ struct dados consultarTelefone(){
         dados.TELEFONE[tamanho] = ch;
         dados.TELEFONE[tamanho+1] = 0; //pega o numero
     }
-    return dados;
     fclose(telefonesTXT);
+    return dados;
 }
 
-void alterarTelefone(long int deslocamento){
+void alterarTelefone(unsigned int deslocamento){
     FILE *telefonesTXT = fopen("Telefones.txt", "r+");
     char TELEFONE[13];
-    printf("%i",deslocamento);
     printf("\nNovo telefone: ");
     scanf(" %12[^\n]",TELEFONE);
     fseek(telefonesTXT, deslocamento, SEEK_SET);
     fputs(("%s/n",TELEFONE),telefonesTXT);
     fclose(telefonesTXT);
+}
+
+void excluirTelefone(char NOME[], char TELEFONE[]){
+    FILE *telefonesTXT = fopen("Telefones.txt", "r");
+    FILE *temp = fopen("temp.txt", "w");
+    char excluir[65], linha[65];
+    excluir [0] = 0;
+    strcat(excluir,NOME);
+    strcat(excluir,",");
+    strcat(excluir,TELEFONE);
+    while(fgets(linha, sizeof(linha), telefonesTXT)!=NULL){
+        if(strstr(linha,excluir)==NULL) fputs(linha,temp);
+    }
+    fclose(telefonesTXT);
+    fclose(temp);
+    remove("Telefones.txt");
+    rename("temp.txt", "Telefones.txt");
+    printf("\nContato %s excluido com sucesso!\n",NOME);
 }
