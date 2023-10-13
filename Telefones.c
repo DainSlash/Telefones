@@ -47,7 +47,7 @@ int main()
             case 2:
                 printf("\n\nConsultando dados\n");
                 dados = consultarTelefone();
-                if(dados.deslocamento!=0) printf("\nTelefone encontrado com sucesso, %s %s.\n\n\n",dados.NOME,dados.TELEFONE);
+                if(dados.deslocamento!=0) printf("\nTelefone encontrado com sucesso, %s %s.\n\n\n",dados.NOME,dados.TELEFONE);//caso o deslocamento seja 0, significa que consultar falhou, pois o nome inserido nao esta no arquivo, uso essa verificacao mais vezes durante o codigo.
                 break;
             case 3:
                 printf("\n\nAlterando dados\n");
@@ -143,25 +143,25 @@ void alterarTelefone(unsigned int deslocamento){
     char TELEFONE[13];
     printf("\nNovo telefone: ");
     scanf(" %12[^\n]",TELEFONE);
-    fseek(telefonesTXT, deslocamento, SEEK_SET);
-    fputs(("%s/n",TELEFONE),telefonesTXT);
-    fclose(telefonesTXT);
+    fseek(telefonesTXT, deslocamento, SEEK_SET); //usando o numero deslocamento move ponteiro ate a virgula correspondete ao Nome inserido
+    fputs(("%s/n",TELEFONE),telefonesTXT); //sobreescreve o numero apos a virgula, com o novo numero
+    fclose(telefonesTXT);//nao eh necessario algo para indicar que falhou, visto que se a consultar falhar, a mensagem ja eh exibida
 }
 
 void excluirTelefone(char NOME[], char TELEFONE[]){
     FILE *telefonesTXT = fopen("Telefones.txt", "r");
     FILE *temp = fopen("temp.txt", "w");
     char excluir[65], linha[65];
-    excluir [0] = 0;
-    strcat(excluir,NOME);
-    strcat(excluir,",");
-    strcat(excluir,TELEFONE);
-    while(fgets(linha, sizeof(linha), telefonesTXT)!=NULL){
-        if(strstr(linha,excluir)==NULL) fputs(linha,temp);
+    excluir [0] = 0; //inicia a string com nulo no comeco.
+    strcat(excluir,NOME); //concatena nome a string, comecando pelo final, sendo esse nulo, que e o comeco
+    strcat(excluir,","); // adiciona a , 
+    strcat(excluir,TELEFONE); // adiciona o telefone ao final
+    while(fgets(linha, sizeof(linha), telefonesTXT)!=NULL){ //se o ponteiro retornado por fgtes for nulo, significa que chegou ao final do arquivo, entao o while quebra.
+        if(strstr(linha,excluir)==NULL) fputs(linha,temp);//se a substring excluir nao estiver contida na string linha, ent escreve linha no arquivo temporario, assim escrevendo todo o arquivo orignal exceto o excluir.
     }
     fclose(telefonesTXT);
     fclose(temp);
     remove("Telefones.txt");
     rename("temp.txt", "Telefones.txt");
-    printf("\nContato %s excluido com sucesso!\n",NOME);
+    printf("\nContato %s excluido com sucesso!\n",NOME);//nao eh necessario algo para indicar que falhou, visto que se a consultar falhar, a mensagem ja eh exibida
 }
