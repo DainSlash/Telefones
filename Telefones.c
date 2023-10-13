@@ -1,15 +1,27 @@
 #include <stdio.h>
 #include <string.h>
 
+//estruct de pessoa cadastrada
+
+typedef struct dados{
+    char NOME[50];
+    char TELEFONE[13];
+    long int deslocamento;
+};
+
+
+
 //escopo de funcoes
 void limparScanf();
-void cadastrarTelefone();
-void consultarTelefone();
+struct dados cadastrarTelefone();
+struct dados consultarTelefone();
+void alterarTelefone(long int deslocamento);
 
 int main()
 {
     //MENU
     FILE *telefonesTXT = fopen("Telefones.txt", "a");//Cria o arquivo telefones caso não exista.
+    struct dados dados;
     fclose(telefonesTXT);
     int o=0;
     while(o!=5){
@@ -26,12 +38,17 @@ int main()
 
         switch(o){
             case 1:
-                cadastrarTelefone();
+                dados = cadastrarTelefone();
+                printf("\nDados cadastrados!\n%s %s\n\n\n",dados.NOME,dados.TELEFONE);
                 break;
             case 2:
-                consultarTelefone();
+                printf("\n\nConsultando dados\n");
+                dados = consultarTelefone();
+                if(dados.deslocamento!=0) printf("\nTelefone encontrado com sucesso, %s %s.\n\n\n",dados.NOME,dados.TELEFONE);
                 break;
             case 3:
+                dados = consultarTelefone();
+                if (dados.deslocamento!=0)alterarTelefone(dados.deslocamento);
                 break;
             case 4:
                 break;
@@ -53,57 +70,73 @@ void limparScanf(){
     }while(ch != EOF && ch != '\n');
 }
 
-void cadastrarTelefone(){
+struct dados cadastrarTelefone(){
     FILE *telefonesTXT = fopen("Telefones.txt", "a");
-    char NOME[50], TELEFONE[13];
+    struct dados dados;
     char vazio=0;
     printf("\nCadastrando dados\n\n");
     do{
         if(vazio==1) printf("“\nNome ou telefone em branco, digite novamente\n"); //depois de rodar novamente o loop, sinaliza o que o nome ou o telefone estavam vazios
         printf("Nome: ");
-        scanf(" %49[^\n]",NOME);
+        scanf(" %49[^\n]",dados.NOME);
         printf("Telefone: ");
-        scanf(" %12[^\n],",TELEFONE);
+        scanf(" %12[^\n],",dados.TELEFONE);
         vazio=1; 
-    }while(NOME[0] == 0 || TELEFONE[0] == 0); //se o primeiro valor de nome ou telefone forem vazios, roda o loop de novo.
-    fprintf(telefonesTXT,"%s,%s\n",NOME,TELEFONE);
+    }while(dados.NOME[0] == 0 || dados.TELEFONE[0] == 0); //se o primeiro valor de nome ou telefone forem vazios, roda o loop de novo.
+    fprintf(telefonesTXT,"%s,%s\n",dados.NOME,dados.TELEFONE);
     fclose(telefonesTXT);
-    printf("\nDados cadastrados!\n%s %s\n\n\n",NOME,TELEFONE);
+    return dados;
 }
 
-void consultarTelefone(){
+struct dados consultarTelefone(){
     FILE *telefonesTXT = fopen("Telefones.txt", "r");
-    char ENTRADA[50], NOME[50], TELEFONE[13], ch = 0;
+    struct dados dados;
+    dados.deslocamento = 0;
+    char ENTRADA[50], ch = 0;
     int tamanho;
-    printf("\n\nConsultando dados\n");
     printf("\nNome: ");
     scanf(" %49[^\n]",ENTRADA);
-    NOME[0] = 0;
-    while (1){
+    dados.NOME[0] = 0;
+    while (1){//pega o nome todo e vai comparando com o nome de entrada
         ch = getc(telefonesTXT);
-        tamanho = strlen(NOME);
+        tamanho = strlen(dados.NOME);
         if(ch==10){ //se ch for new line, então recomeça o vetor nome, 
             tamanho = 0;
             ch = getc(telefonesTXT); //vai para o proximo ch, para tirar o nw de ch.
+            dados.deslocamento+=2;//adiciona 1 para o char newline e um para o cr
         }
-        NOME[tamanho] = ch;
-        NOME[tamanho+1] = 0;
-        if(strcmp(NOME, ENTRADA) == 0)break;//se o nome de entrada bater com algum nome do arquivo quebra o loop
+        dados.NOME[tamanho] = ch;
+        dados.NOME[tamanho+1] = 0;
+        dados.deslocamento++;
+        if(strcmp(dados.NOME, ENTRADA) == 0)break;//se o nome de entrada bater com algum nome do arquivo quebra o loop
         if(ch==EOF){
             printf("\nTelefone de %s nao cadastrado\n\n\n",ENTRADA);
-            return;
+            dados.deslocamento = 0;
+            return dados;
         };
         tamanho = (tamanho==49) ? 0: tamanho;
     }
+    dados.deslocamento++;
     ch = getc(telefonesTXT); //pega a ,
     tamanho=0;
-    TELEFONE[0] = 0;
+    dados.TELEFONE[0] = 0;
     while (tamanho<11){
         ch =getc(telefonesTXT);
-        tamanho = strlen(TELEFONE);
-        TELEFONE[tamanho] = ch;
-        TELEFONE[tamanho+1] = 0; //pega o numero
+        tamanho = strlen(dados.TELEFONE);
+        dados.TELEFONE[tamanho] = ch;
+        dados.TELEFONE[tamanho+1] = 0; //pega o numero
     }
-    printf("\nTelefone encontrado com sucesso, %s %s.\n\n\n",NOME,TELEFONE);
+    return dados;
+    fclose(telefonesTXT);
+}
+
+void alterarTelefone(long int deslocamento){
+    FILE *telefonesTXT = fopen("Telefones.txt", "r+");
+    char TELEFONE[13];
+    printf("%i",deslocamento);
+    printf("\nNovo telefone: ");
+    scanf(" %12[^\n]",TELEFONE);
+    fseek(telefonesTXT, deslocamento, SEEK_SET);
+    fputs(("%s/n",TELEFONE),telefonesTXT);
     fclose(telefonesTXT);
 }
